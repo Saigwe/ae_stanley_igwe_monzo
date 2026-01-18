@@ -5,7 +5,7 @@ with account_states as (
         user_id,
         date(valid_from) as valid_from_date,
         date(coalesce(valid_to, timestamp '9999-12-31')) as valid_to_date
-    from {{ ref('accounts_history') }}
+    from {{ ref('dim_accounts_history') }}
     where is_open = true
 
 ),

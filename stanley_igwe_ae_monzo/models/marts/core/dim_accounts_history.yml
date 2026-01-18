@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: accounts_history
+  - name: dim_accounts_history
     description: >
       Historical dimension of Monzo accounts.
       One row per account per continuous state period,
