@@ -11,19 +11,52 @@ eligible_users as (
         activity_date,
         count(distinct user_id) as eligible_users
     from {{ ref('int_user_open_status_daily') }}
-    group by 1
+    group by activity_date
+
+),
+
+user_activity_spine as (
+
+    select
+        c.activity_date,
+        u.user_id,
+        coalesce(a.is_active, false) as is_active
+    from calendar c
+    join (
+        select distinct user_id
+        from {{ ref('int_user_open_status_daily') }}
+    ) u
+        on true
+    left join {{ ref('int_user_daily_activity') }} a
+        on a.user_id = u.user_id
+       and a.activity_date = c.activity_date
+
+),
+
+rolling_activity as (
+
+    select
+        activity_date,
+        user_id,
+
+        max(cast(is_active as int64)) over (
+            partition by user_id
+            order by activity_date
+            rows between 6 preceding and current row
+        ) as is_active_7d
+
+    from user_activity_spine
 
 ),
 
 active_users as (
 
     select
-        u.activity_date,
-        count(distinct u.user_id) as active_users
-    from {{ ref('int_user_daily_activity') }} u
-    where u.is_active = true
-      and u.activity_date >= date_sub(u.activity_date, interval 6 day)
-    group by 1
+        activity_date,
+        count(distinct user_id) as active_users
+    from rolling_activity
+    where is_active_7d = 1
+    group by activity_date
 
 )
 
