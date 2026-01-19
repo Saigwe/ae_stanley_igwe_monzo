@@ -30,6 +30,23 @@ jobs:
         run: |
           echo '${{ secrets.GCP_SA_KEY }}' > gcp-key.json
 
+      - name: Write dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat << 'EOF' > ~/.dbt/profiles.yml
+          ae_stanley_igwe_monzo:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account
+                project: analytics-take-home-test
+                dataset: AE_Stan_Igwe_Task
+                keyfile: gcp-key.json
+                location: US
+                threads: 4
+          EOF
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
